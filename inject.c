@@ -260,23 +260,21 @@ static void blank_payload(uint8_t out[FRAME_SIZE])
 
 static void pixels_to_payload(const int px[H][W], uint8_t out[FRAME_SIZE], const char *name)
 {
+    (void)name; /* column 16 is now supported */
+
     blank_payload(out);
 
     for (int y = 0; y < H; y++) {
-        if (px[y][15]) {
-            fprintf(stderr,
-                    "Warning: %s has lit pixels in column 16; column 16 is ignored\n",
-                    name);
-            break;
-        }
-    }
-
-    for (int y = 0; y < H; y++) {
-        for (int group = 0; group < 3; group++) {
+        for (int group = 0; group < 4; group++) {
             uint8_t v = 0;
 
-            for (int bit = 0; bit < 5; bit++) {
+            for (int bit = 4; bit >= 0; bit--) {
                 int x = group * 5 + (4 - bit);
+
+                /* The fourth group contains column 16 plus off-screen bits. */
+                if (x >= W)
+                    continue;
+
                 if (px[y][x])
                     v |= (uint8_t)(1 << bit);
             }
@@ -284,8 +282,6 @@ static void pixels_to_payload(const int px[H][W], uint8_t out[FRAME_SIZE], const
             out[group * 16 + y] = v;
         }
     }
-
-    /* bytes 48-63 remain zero */
 }
 
 static int copy_file_to_memory(const char *path, uint8_t **data_out, size_t *size_out)

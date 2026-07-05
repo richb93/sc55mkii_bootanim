@@ -6,19 +6,20 @@
 #define FRAME_COUNT 150
 #define FRAME_SIZE 64
 
-static void write_ascii(FILE *out, const uint8_t f[64])
+static void write_ascii(FILE *out, const uint8_t f[FRAME_SIZE])
 {
     for (int y = 0; y < 16; y++) {
-        for (int group = 0; group < 3; group++) {
+        for (int group = 0; group < 4; group++) {
             uint8_t v = f[group * 16 + y] & 0x1F;
 
             for (int bit = 4; bit >= 0; bit--) {
-                fputc((v & (1 << bit)) ? '#' : '.', out);
+                int x = group * 5 + (4 - bit);
+
+                if (x < 16)
+                    fputc((v & (1 << bit)) ? '#' : '.', out);
             }
         }
 
-        /* 16th column, not present in the 3x5-byte payload */
-        fputc('.', out);
         fputc('\n', out);
     }
 }
