@@ -24,9 +24,6 @@
  * PBM format:
  *   Plain P1 PBM only.
  *
- * Notes:
- *   The SC-55 display payload stores only 15 visible columns as 3x5-bit groups.
- *   Column 16 is ignored. A warning is printed if it contains lit pixels.
  */
 
 #include <stdio.h>
