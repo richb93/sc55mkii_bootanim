@@ -12,17 +12,21 @@ Format: 64 bytes per frame
 
 0x0712C0–0x07257F  75 frames  SC-155mkII boot animation
 
-Each frame is the raw 64-byte LCD/SysEx display payload, without the SysEx header/checksum. The first 48 bytes are three 16-row strips:
+Each frame is the raw 64-byte LCD/SysEx display payload, without the SysEx header/checksum.
 
-bytes  0–15   left 5-column strip
+The frame is stored as four 16-row strips:
 
-bytes 16–31   middle 5-column strip
+bytes  0–15   columns  1–5
 
-bytes 32–47   right 5-column strip
+bytes 16–31   columns  6–10
 
-bytes 48–63   unused / blank
+bytes 32–47   columns 11–15
 
-Each byte is a 5-bit vertical-row value, 0x00–0x1F.
+bytes 48–63   column 16 plus four off-screen/clipped bits
+
+Each byte contains a 5-bit horizontal slice for one display row.
+
+Only the first 16 columns are visible; bits that would map beyond column 16 are ignored/clipped by the display.
 
 extract will extract to P1 PBM/ASCII
 
