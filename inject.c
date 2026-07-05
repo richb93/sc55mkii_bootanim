@@ -20,7 +20,7 @@
  *   . = off
  *
  * PBM format:
- *   Plain P1 PBM only.
+ *   Plain P1 PBM and raw P4 PBM are supported.
  *
  */
 
@@ -184,7 +184,7 @@ static int pbm_next_token(FILE *fp, char *tok, size_t tok_size)
 
 static int read_pbm_frame(const char *path, int px[H][W])
 {
-    FILE *fp = fopen(path, "r");
+    FILE *fp = fopen(path, "rb");
     if (!fp) {
         perror(path);
         return -1;
@@ -192,19 +192,33 @@ static int read_pbm_frame(const char *path, int px[H][W])
 
     char tok[64];
 
-    if (!pbm_next_token(fp, tok, sizeof(tok)) || strcmp(tok, "P1") != 0) {
-        fprintf(stderr, "%s: only plain P1 PBM is supported\n", path);
+    if (!pbm_next_token(fp, tok, sizeof(tok))) {
+        fprintf(stderr, "%s: missing PBM magic\n", path);
+        fclose(fp);
+        return -1;
+    }
+
+    int raw_p4 = 0;
+
+    if (strcmp(tok, "P1") == 0) {
+        raw_p4 = 0;
+    } else if (strcmp(tok, "P4") == 0) {
+        raw_p4 = 1;
+    } else {
+        fprintf(stderr, "%s: only P1 and P4 PBM are supported\n", path);
         fclose(fp);
         return -1;
     }
 
     if (!pbm_next_token(fp, tok, sizeof(tok))) {
+        fprintf(stderr, "%s: missing PBM width\n", path);
         fclose(fp);
         return -1;
     }
     int w = atoi(tok);
 
     if (!pbm_next_token(fp, tok, sizeof(tok))) {
+        fprintf(stderr, "%s: missing PBM height\n", path);
         fclose(fp);
         return -1;
     }
@@ -216,22 +230,46 @@ static int read_pbm_frame(const char *path, int px[H][W])
         return -1;
     }
 
-    for (int y = 0; y < H; y++) {
-        for (int x = 0; x < W; x++) {
-            if (!pbm_next_token(fp, tok, sizeof(tok))) {
-                fprintf(stderr, "%s: not enough PBM pixel data\n", path);
-                fclose(fp);
-                return -1;
-            }
+    if (!raw_p4) {
+        /* Plain ASCII PBM, one token per pixel. */
+        for (int y = 0; y < H; y++) {
+            for (int x = 0; x < W; x++) {
+                if (!pbm_next_token(fp, tok, sizeof(tok))) {
+                    fprintf(stderr, "%s: not enough PBM pixel data\n", path);
+                    fclose(fp);
+                    return -1;
+                }
 
-            if (strcmp(tok, "1") == 0)
-                px[y][x] = 1;
-            else if (strcmp(tok, "0") == 0)
-                px[y][x] = 0;
-            else {
-                fprintf(stderr, "%s: invalid PBM pixel '%s'\n", path, tok);
-                fclose(fp);
-                return -1;
+                if (strcmp(tok, "1") == 0)
+                    px[y][x] = 1;
+                else if (strcmp(tok, "0") == 0)
+                    px[y][x] = 0;
+                else {
+                    fprintf(stderr, "%s: invalid PBM pixel '%s'\n", path, tok);
+                    fclose(fp);
+                    return -1;
+                }
+            }
+        }
+    } else {
+        /* Raw binary PBM. For width 16, each row is exactly 2 bytes.
+           In PBM, bit 7 of the first byte is the leftmost pixel. */
+        const int bytes_per_row = (W + 7) / 8;
+
+        for (int y = 0; y < H; y++) {
+            for (int byte_i = 0; byte_i < bytes_per_row; byte_i++) {
+                int c = fgetc(fp);
+                if (c == EOF) {
+                    fprintf(stderr, "%s: not enough P4 pixel data\n", path);
+                    fclose(fp);
+                    return -1;
+                }
+
+                for (int bit = 7; bit >= 0; bit--) {
+                    int x = byte_i * 8 + (7 - bit);
+                    if (x < W)
+                        px[y][x] = (c & (1 << bit)) ? 1 : 0;
+                }
             }
         }
     }
