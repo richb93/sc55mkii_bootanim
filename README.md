@@ -47,6 +47,6 @@ Input is a maximum of 75 frames. If more are supplied, only the first 75 will be
 
 If --loop is specified, the frames supplied will be looped as many times as they can fully, and the remaining frames blanked; i.e. if 6 input frames are provided, they will be looped 12 times (72 frames), and the remaining 3 frames in ROM will be blanked
 
-Note that the inject tool has NOT BEEN TESTED.
+Inject tool tested via Nuked SC-55
 
 As far as I'm aware, the SC-155 animation has not been seen before, as Roland never realeased a mkII SC-155. This does give me hope however that a SC-55mkII board could be retrofitted into an original SC-155, and a modification discovered to put the board into SC-155 mode, as the code is already there.
