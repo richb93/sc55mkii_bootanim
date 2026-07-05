@@ -1,17 +1,15 @@
 /*
- * inject_sc55_boot.c
+ * inject.c
  *
- * Patch SC-55mkII / hidden SC-155mkII boot display frames into a control ROM.
+ * Patch SC-55mkII / SC-155mkII boot display frames into a control ROM.
  *
- * Build:
- *   cc -O2 -Wall -Wextra -o inject_sc55_boot inject_sc55_boot.c
  *
  * Usage:
- *   ./inject_sc55_boot -55  input.rom output.rom frames_dir
- *   ./inject_sc55_boot -155 input.rom output.rom frames_dir
+ *   ./inject -55  input.rom output.rom frames_dir
+ *   ./inject -155 input.rom output.rom frames_dir
  *
  * With looping:
- *   ./inject_sc55_boot -55 --loop input.rom output.rom frames_dir
+ *   ./inject -55 --loop input.rom output.rom frames_dir
  *
  * Input frames:
  *   frame_0000.txt / .pbm etc, sorted alphabetically.
